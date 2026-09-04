@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1976d2">
+
+<title>Приём АКБ</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    margin: 0;
+    padding: 15px;
+    color: #222;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+}
+
+h2 {
+    text-align: center;
+    margin-top: 5px;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 7px rgba(0,0,0,0.08);
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 15px;
+    color: #555;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px;
+    font-size: 22px;
+    margin-bottom: 12px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    font-size: 19px;
+    border: 0;
+    border-radius: 8px;
+    background: #1976d2;
+    color: white;
+    cursor: pointer;
+}
+
+.preview {
+    background: #e8f3ff;
+    font-size: 20px;
+    line-height: 1.7;
+}
+
+.totals {
+    font-size: 21px;
+    line-height: 1.7;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px 3px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+    font-size: 14px;
+}
+
+.delete {
+    background: #d32f2f;
+    width: auto;
+    padding: 6px 10px;
+    font-size: 15px;
+}
+
+.clear {
+    margin-top: 15px;
+    background: #555;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Приём АКБ</h2>
+
+<div class="card">
+
+<label>Цена нетто</label>
+
+<input
+    id="price"
+    type="number"
+    inputmode="decimal"
+    step="0.01"
+    value="2.68"
+>
+
+<label>Вес брутто</label>
+
+<input
+    id="weight"
+    type="number"
+    inputmode="decimal"
+    step="0.1"
+    placeholder="Введите вес"
+>
+
+<button id="addButton">
+Добавить АКБ
+</button>
+
+</div>
+
+<div class="card preview">
+
+<b>РАСЧЁТ</b><br>
+
+Нетто:
+<b><span id="previewNet">0.0</span> кг</b>
+<br>
+
+Сумма:
+<b><span id="previewMoney">0.00</span> руб.</b>
+
+</div>
+
+<div class="card totals">
+
+<b>ИТОГО ЗА ДЕНЬ</b><br>
+
+Брутто:
+<b><span id="totalGross">0.0</span> кг</b>
+<br>
+
+Нетто:
+<b><span id="totalNet">0.0</span> кг</b>
+<br>
+
+Деньги:
+<b><span id="totalMoney">0.00</span> руб.</b>
+<br>
+
+АКБ:
+<b><span id="count">0</span> шт.</b>
+
+</div>
+
+<div class="card">
+
+<table>
+
+<thead>
+<tr>
+<th>№</th>
+<th>Брутто</th>
+<th>Нетто</th>
+<th>Сумма</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody id="list"></tbody>
+
+</table>
+
+<button id="clearButton" class="clear">
+Новый день / очистить
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+var batteries = [];
+
+try {
+    var saved = localStorage.getItem("akbData");
+
+    if (saved) {
+        batteries = JSON.parse(saved);
+    }
+} catch(e) {}
+
+
+var weightInput =
+    document.getElementById("weight");
+
+var priceInput =
+    document.getElementById("price");
+
+
+try {
+    var savedPrice =
+        localStorage.getItem("akbPrice");
+
+    if (savedPrice) {
+        priceInput.value = savedPrice;
+    }
+} catch(e) {}
+
+
+function getNumber(value) {
+    value = String(value).replace(",", ".");
+    return parseFloat(value);
+}
+
+
+function round1(number) {
+    return Math.round((number + Number.EPSILON) * 10) / 10;
+}
+
+
+function round2(number) {
+    return Math.round((number + Number.EPSILON) * 100) / 100;
+}
+
+
+function calculate() {
+
+    var gross =
+        getNumber(weightInput.value);
+
+    var price =
+        getNumber(priceInput.value);
+
+    if (isNaN(gross) || isNaN(price)) {
+
+        document.getElementById("previewNet").textContent =
+            "0.0";
+
+        document.getElementById("previewMoney").textContent =
+            "0.00";
+
+        return;
+    }
+
+    var net =
+        round1(gross * 0.55);
+
+    var money =
+        round2(net * price);
+
+    document.getElementById("previewNet").textContent =
+        net.toFixed(1);
+
+    document.getElementById("previewMoney").textContent =
+        money.toFixed(2);
+}
+
+
+function addBattery() {
+
+    var gross =
+        getNumber(weightInput.value);
+
+    var price =
+        getNumber(priceInput.value);
+
+    if (isNaN(gross) || gross <= 0) {
+        alert("Введите вес");
+        return;
+    }
+
+    if (isNaN(price) || price <= 0) {
+        alert("Введите цену");
+        return;
+    }
+
+    var net =
+        round1(gross * 0.55);
+
+    var money =
+        round2(net * price);
+
+    batteries.push({
+        gross: gross,
+        net: net,
+        price: price,
+        money: money
+    });
+
+    saveData();
+
+    weightInput.value = "";
+
+    calculate();
+    render();
+
+    weightInput.focus();
+}
+
+
+function saveData() {
+
+    try {
+
+        localStorage.setItem(
+            "akbData",
+            JSON.stringify(batteries)
+        );
+
+        localStorage.setItem(
+            "akbPrice",
+            priceInput.value
+        );
+
+    } catch(e) {}
+}
+
+
+function deleteRow(index) {
+
+    batteries.splice(index, 1);
+
+    saveData();
+    render();
+}
+
+
+function clearAll() {
+
+    if (confirm("Очистить все записи за день?")) {
+
+        batteries = [];
+
+        saveData();
+        render();
+    }
+}
+
+
+function render() {
+
+    var html = "";
+
+    var totalGross = 0;
+    var totalNet = 0;
+    var totalMoney = 0;
+
+    for (var i = 0; i < batteries.length; i++) {
+
+        var b = batteries[i];
+
+        totalGross += Number(b.gross);
+        totalNet += Number(b.net);
+        totalMoney += Number(b.money);
+
+        html +=
+            "<tr>" +
+            "<td>" + (i + 1) + "</td>" +
+            "<td>" + Number(b.gross).toFixed(1) + "</td>" +
+            "<td>" + Number(b.net).toFixed(1) + "</td>" +
+            "<td>" + Number(b.money).toFixed(2) + "</td>" +
+            "<td>" +
+            "<button class='delete' onclick='deleteRow(" +
+            i +
+            ")'>×</button>" +
+            "</td>" +
+            "</tr>";
+    }
+
+    document.getElementById("list").innerHTML =
+        html;
+
+    document.getElementById("totalGross").textContent =
+        round1(totalGross).toFixed(1);
+
+    document.getElementById("totalNet").textContent =
+        round1(totalNet).toFixed(1);
+
+    document.getElementById("totalMoney").textContent =
+        round2(totalMoney).toFixed(2);
+
+    document.getElementById("count").textContent =
+        batteries.length;
+}
+
+
+weightInput.addEventListener(
+    "input",
+    calculate
+);
+
+
+priceInput.addEventListener(
+    "input",
+    function() {
+
+        calculate();
+
+        try {
+            localStorage.setItem(
+                "akbPrice",
+                priceInput.value
+            );
+        } catch(e) {}
+    }
+);
+
+
+document.getElementById("addButton")
+    .addEventListener("click", addBattery);
+
+
+document.getElementById("clearButton")
+    .addEventListener("click", clearAll);
+
+
+render();
+
+
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener("load", function() {
+
+        navigator.serviceWorker
+            .register("./sw.js")
+            .catch(function(error) {
+                console.log(error);
+            });
+
+    });
+
+}
+
+</script>
+
+</body>
+</html>
