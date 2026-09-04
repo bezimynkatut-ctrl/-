@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#1976d2"/>
+
+  <!-- Клеммы -->
+  <rect x="120" y="110" width="75" height="45" rx="12" fill="white"/>
+  <rect x="317" y="110" width="75" height="45" rx="12" fill="white"/>
+
+  <!-- Корпус аккумулятора -->
+  <rect x="70" y="140" width="372" height="250" rx="35"
+        fill="white"/>
+
+  <!-- Плюс -->
+  <rect x="125" y="220" width="90" height="22" rx="6"
+        fill="#1976d2"/>
+  <rect x="159" y="186" width="22" height="90" rx="6"
+        fill="#1976d2"/>
+
+  <!-- Минус -->
+  <rect x="297" y="220" width="90" height="22" rx="6"
+        fill="#1976d2"/>
+
+  <!-- АКБ -->
+  <text x="256" y="345"
+        text-anchor="middle"
+        font-family="Arial, sans-serif"
+        font-size="72"
+        font-weight="bold"
+        fill="#1976d2">АКБ</text>
+</svg>
